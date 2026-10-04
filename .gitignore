@@ -1,0 +1,87 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+node_modules
+dist
+dist-ssr
+*.local
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+venv/
+env/
+
+# Environment variables
+.env
+.env.*
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Node
+node_modules/
+dist/
+build/
+
+# Logs
+*.log
+
+# MLflow
+mlruns/
+mlartifacts/
+
+# Optuna
+optuna.db
+*.db
+
+# Python cache
+.pytest_cache/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Large datasets
+data/
+datasets/
+*.zip
+
+# Generated files 
+outputs/ 
+results/ 
+checkpoints/ 
+runs/ 
+
+# Temporary files 
+tmp/ 
+temp/ 
+
+# Model files
+*.onnx
+*.pt
+*.pth
+*.ckpt
