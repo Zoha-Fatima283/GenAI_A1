@@ -1,7 +1,6 @@
-
 import React, { useState } from "react";
 import axios from "axios";
-import { Upload, Image as ImageIcon, Loader2 } from "lucide-react";
+import { Upload, Image as ImageIcon, Loader2, Download } from "lucide-react";
 
 const API_URL = "http://localhost:8000";
 
@@ -62,23 +61,48 @@ export default function FaceToSketch() {
                 `${API_URL}/face-to-sketch`,
                 formData,
                 {
-                    responseType: "blob",
                     headers: {
                         "Content-Type": "multipart/form-data",
                     },
                 }
             );
 
-            const imageUrl = URL.createObjectURL(response.data);
+            console.log("Face-to-sketch response:", response.data);
+
+            // Backend returns:
+            // {
+            //     success: true,
+            //     image: "<base64>",
+            //     style: 0
+            // }
+
+            if (!response.data.success || !response.data.image) {
+                throw new Error("Backend did not return a generated image.");
+            }
+
+            // Convert base64 response into an image URL
+            const imageUrl = `data:image/png;base64,${response.data.image}`;
+
             setResult(imageUrl);
 
         } catch (err) {
-            console.error(err);
+            console.error("Face-to-sketch error:", err);
 
             if (err.response) {
-                setError(
-                    `Backend error: ${err.response.status} ${err.response.statusText}`
-                );
+                console.error("Backend response:", err.response.data);
+
+                if (typeof err.response.data === "object") {
+                    setError(
+                        err.response.data.detail ||
+                        "The backend returned an error while generating the sketch."
+                    );
+                } else {
+                    setError(
+                        `Backend error: ${err.response.status} ${err.response.statusText}`
+                    );
+                }
+            } else if (err.message) {
+                setError(err.message);
             } else {
                 setError(
                     "Could not connect to the backend. Make sure FastAPI is running."
@@ -87,6 +111,18 @@ export default function FaceToSketch() {
         } finally {
             setLoading(false);
         }
+    };
+
+    const handleDownload = () => {
+        if (!result) return;
+
+        const link = document.createElement("a");
+        link.href = result;
+        link.download = `generated_sketch_style_${style + 1}.png`;
+
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
     };
 
     return (
@@ -104,9 +140,10 @@ export default function FaceToSketch() {
                 </p>
             </div>
 
-            {/* Upload card */}
+            {/* Main Card */}
             <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
 
+                {/* Upload */}
                 <div className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-gray-300 p-10">
 
                     <Upload className="mb-4 h-10 w-10 text-gray-400" />
@@ -146,7 +183,7 @@ export default function FaceToSketch() {
                             Input Face
                         </h3>
 
-                        <div className="overflow-hidden rounded-lg border border-gray-200">
+                        <div className="overflow-hidden rounded-lg border border-gray-200 bg-gray-50">
                             <img
                                 src={preview}
                                 alt="Input face"
@@ -170,7 +207,11 @@ export default function FaceToSketch() {
                             {styles.map((item) => (
                                 <button
                                     key={item.id}
-                                    onClick={() => setStyle(item.id)}
+                                    type="button"
+                                    onClick={() => {
+                                        setStyle(item.id);
+                                        setResult(null);
+                                    }}
                                     className={`rounded-lg border p-4 text-left transition ${style === item.id
                                         ? "border-blue-600 bg-blue-50 ring-2 ring-blue-200"
                                         : "border-gray-200 bg-white hover:border-gray-400"
@@ -209,9 +250,10 @@ export default function FaceToSketch() {
                     </div>
                 )}
 
-                {/* Generate button */}
+                {/* Generate Button */}
                 {file && (
                     <button
+                        type="button"
                         onClick={handleGenerate}
                         disabled={loading}
                         className="mt-6 flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 px-5 py-3 font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
@@ -238,45 +280,66 @@ export default function FaceToSketch() {
             {result && (
                 <div className="mt-8 rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
 
-                    <h2 className="mb-6 text-xl font-bold text-gray-900">
-                        Generated Sketch
-                    </h2>
+                    <div className="mb-6 flex items-center justify-between">
+
+                        <h2 className="text-xl font-bold text-gray-900">
+                            Generated Sketch
+                        </h2>
+
+                        <button
+                            type="button"
+                            onClick={handleDownload}
+                            className="flex items-center gap-2 rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-800"
+                        >
+                            <Download className="h-4 w-4" />
+                            Download
+                        </button>
+
+                    </div>
 
                     <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
 
+                        {/* Input */}
                         <div>
+
                             <h3 className="mb-3 font-semibold text-gray-800">
                                 Input Face
                             </h3>
 
-                            <div className="overflow-hidden rounded-lg border border-gray-200">
+                            <div className="overflow-hidden rounded-lg border border-gray-200 bg-gray-50">
                                 <img
                                     src={preview}
                                     alt="Input face"
-                                    className="w-full object-contain"
+                                    className="max-h-[500px] w-full object-contain"
                                 />
                             </div>
+
                         </div>
 
+                        {/* Generated */}
                         <div>
+
                             <h3 className="mb-3 font-semibold text-gray-800">
                                 Generated Sketch — Style {style + 1}
                             </h3>
 
-                            <div className="overflow-hidden rounded-lg border border-gray-200">
+                            <div className="flex min-h-[300px] items-center justify-center overflow-hidden rounded-lg border border-gray-200 bg-gray-50">
+
                                 <img
                                     src={result}
                                     alt="Generated sketch"
-                                    className="w-full object-contain"
+                                    className="max-h-[500px] w-full object-contain"
                                 />
+
                             </div>
+
                         </div>
 
                     </div>
 
                 </div>
             )}
+
         </div>
     );
 }
-

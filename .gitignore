@@ -80,8 +80,3 @@ runs/
 tmp/ 
 temp/ 
 
-# Model files
-*.onnx
-*.pt
-*.pth
-*.ckpt
